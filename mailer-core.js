@@ -31,6 +31,31 @@ Mailer = function (action) {
 };
 
 /**
+ * Composes multiple mailer instances into one which performs all of the actions of each mailer instance
+ *
+ * @method Mailer.compose
+ * @param {mailer|array|object...} mailers The mailers to compose into one
+ *
+ * @returns {mailer} A mailer which runs all the specified actions when sending
+ */
+
+Mailer.compose = function () {
+  var mailers = _.flatten(_.toArray(arguments));
+  var mailer = new Mailer(function (email) {
+    _.each(mailer.mailers, function (mailer) {
+      email = mailer.send(email);
+    });
+    return email;
+  });
+  mailer.mailers = _.map(mailers, function (mailer) {
+    if (!(mailer instanceof Mailer))
+      mailer = new Mailer(mailer.action, mailer.options);
+    return mailer;
+  });
+  return mailer;
+};
+
+/**
  * Sends an email by passing it to mailer.action
  *
  * @method Mailer.prototype.send
@@ -46,4 +71,19 @@ Mailer.prototype.send = function(email) {
   return this.action.call({
     options: options
   }, email);
+};
+
+/**
+ * Creates a clone of this mailer, extending it with the additional options specified
+ *
+ * @method  Mailer.prototype.extend
+ * @param {object...} options The options used to extend the current mailer
+ *
+ * @returns {mailer} The mailer with the extended options set
+ */
+
+Mailer.prototype.extend = function () {
+  var options = _.extend.apply(_, [{}, this.options].concat(_.toArray(arguments)));
+
+  return new Mailer(this.action, options);
 };

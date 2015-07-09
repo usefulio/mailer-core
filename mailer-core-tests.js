@@ -42,3 +42,33 @@ Tinytest.add('Mailer - passes additional options to action when sending', functi
     , last: 'three'
   });
 });
+
+Tinytest.add('Mailer - Mailer.compose runs multiple actions in a chain', function (test) {
+  var sender = new Mailer(function (email) {
+    email.sent = true;
+    return email;
+  });
+  var logger = new Mailer(function (email) {
+    email.logged = true;
+    return email;
+  });
+  var mailer = Mailer.compose(sender, logger);
+
+  test.equal(mailer.send({}), {
+    sent: true
+    , logged: true
+  });
+});
+
+Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional options', function (test) {
+  var mailer = new Mailer(function (email) {
+    return _.extend(email, this.options);
+  });
+  var extendedMailer = mailer.extend({
+    name: 'test'
+  });
+
+  test.equal(extendedMailer.send({}), {
+    name: 'test'
+  });
+});
