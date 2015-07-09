@@ -57,10 +57,14 @@ Mailer.compose = function () {
   return mailer;
 };
 
+Mailer.Router = function () {
+  this._routes = {};
+};
+
 /**
  * Creates a route with the specified name so that you can call Mailer.set(name, email)
  *
- * @method  Mailer.route
+ * @method  Mailer.Router.prototype.route
  * @param {string} routeName The name of the route
  * @param {function} action The route action, see the docs for new Mailer
  * @param {object...} options The options for this route, see the docs for new Mailer
@@ -68,11 +72,10 @@ Mailer.compose = function () {
  * @returns {mailer} The route which was created
  */
 
-Mailer.route = function (routeName) {
+Mailer.Router.prototype.route = function (routeName) {
   var mailerParams = _.toArray(arguments).slice(1);
   var mailer = Mailer.apply(new Mailer(), mailerParams);
   mailer.name = routeName;
-  this._routes = this._routes || {};
   this._routes[routeName] = mailer;
 
   return mailer;
@@ -81,13 +84,13 @@ Mailer.route = function (routeName) {
 /**
  * Sends an email using the specified route
  *
- * @method  Mailer.send
+ * @method  Mailer.Router.prototype.send
  * @param {string} routeName The name of the route to use
  * @param {object} email The email to send
  * @param {object...} options The options to use when sending the email
  */
 
-Mailer.send = function (routeName) {
+Mailer.Router.prototype.send = function (routeName) {
   var sendParams = _.toArray(arguments).slice(1);
   var mailer = this._routes[routeName];
 

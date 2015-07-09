@@ -73,23 +73,21 @@ Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional option
   });
 });
 
-Tinytest.add('Mailer - Mailer.route creates a new mailer with the specified route name', function (test) {
-  // Clear out old routes
-  delete Mailer._routes;
+Tinytest.add('Mailer - Mailer.Router.route creates a new mailer with the specified route name', function (test) {
+  var router = new Mailer.Router();
 
-  var mailer = Mailer.route('test');
+  var mailer = router.route('test');
 
   test.equal(mailer.name, 'test');
-  test.equal(Mailer._routes, {
+  test.equal(router._routes, {
     test: mailer
   });
 });
 
-Tinytest.add('Mailer - Mailer.send sends email via the named route', function (test) {
-  // Clear out old routes
-  delete Mailer._routes;
+Tinytest.add('Mailer - Mailer.Router.send sends email via the named route', function (test) {
+  var router = new Mailer.Router();
 
-  var mailer = Mailer.route('test', function (email) {
+  var mailer = router.route('test', function (email) {
     email.sent = true;
     email.logged = this.options.logged;
     return email;
@@ -97,18 +95,17 @@ Tinytest.add('Mailer - Mailer.send sends email via the named route', function (t
     logged: true
   });
 
-  test.equal(Mailer.send('test', {}), {sent: true, logged: true});
+  test.equal(router.send('test', {}), {sent: true, logged: true});
 });
 
-Tinytest.add('Mailer - Mailer.send accepts additional options', function (test) {
-  // Clear out old routes
-  delete Mailer._routes;
+Tinytest.add('Mailer - Mailer.Router.send accepts additional options', function (test) {
+  var router = new Mailer.Router();
 
-  var mailer = Mailer.route('test', function (email) {
+  var mailer = router.route('test', function (email) {
     email.sent = true;
     email.logged = this.options.logged;
     return email;
   });
 
-  test.equal(Mailer.send('test', {}, {logged: true}), {sent: true, logged: true});
+  test.equal(router.send('test', {}, {logged: true}), {sent: true, logged: true});
 });
