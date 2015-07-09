@@ -13,6 +13,8 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.1.0.2');
   api.addFiles('mailer-core.js');
+
+  api.export('Mailer');
 });
 
 Package.onTest(function(api) {
