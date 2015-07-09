@@ -72,3 +72,43 @@ Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional option
     name: 'test'
   });
 });
+
+Tinytest.add('Mailer - Mailer.route creates a new mailer with the specified route name', function (test) {
+  // Clear out old routes
+  delete Mailer._routes;
+
+  var mailer = Mailer.route('test');
+
+  test.equal(mailer.name, 'test');
+  test.equal(Mailer._routes, {
+    test: mailer
+  });
+});
+
+Tinytest.add('Mailer - Mailer.send sends email via the named route', function (test) {
+  // Clear out old routes
+  delete Mailer._routes;
+
+  var mailer = Mailer.route('test', function (email) {
+    email.sent = true;
+    email.logged = this.options.logged;
+    return email;
+  }, {
+    logged: true
+  });
+
+  test.equal(Mailer.send('test', {}), {sent: true, logged: true});
+});
+
+Tinytest.add('Mailer - Mailer.send accepts additional options', function (test) {
+  // Clear out old routes
+  delete Mailer._routes;
+
+  var mailer = Mailer.route('test', function (email) {
+    email.sent = true;
+    email.logged = this.options.logged;
+    return email;
+  });
+
+  test.equal(Mailer.send('test', {}, {logged: true}), {sent: true, logged: true});
+});
