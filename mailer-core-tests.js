@@ -76,12 +76,46 @@ Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional option
 Tinytest.add('Mailer - Mailer.Router.route creates a new mailer with the specified route name', function (test) {
   var router = new Mailer.Router();
 
-  var mailer = router.route('test');
+  var mailer = router.route('test', function (email) {});
 
   test.equal(mailer.name, 'test');
   test.equal(router._routes, {
     test: mailer
   });
+});
+
+Tinytest.add('Mailer - Mailer.Router.route accepts multiple actions and named routes', function (test) {
+  var router = new Mailer.Router();
+  router.route('before', function (email) {
+    email.log += 'before';
+    return email;
+  });
+  router.route('after', function (email) {
+    email.log += 'after';
+    return email;
+  });
+  router.route('test'
+    , function (email) {email.log = ''; return email;}
+    , 'before'
+    , function (email) {email.log += '1'; return email;}
+    , 'after'
+  );
+
+  test.equal(router.send('test', {}), {log: 'before1after'});
+});
+
+Tinytest.add('Mailer - Mailer.Router.route with multiple actions passes options to first anonymous action', function (test) {
+  var router = new Mailer.Router();
+  router.route('before', function (email) { return email; });
+  router.route('after', function (email) { return email; });
+  router.route('test'
+    , function (email) {email.log = this.options.log; return email;}
+    , 'before'
+    , function (email) {return email;}
+    , 'after'
+  );
+
+  test.equal(router.send('test', {}, {log: 'test'}), {log: 'test'});
 });
 
 Tinytest.add('Mailer - Mailer.Router.send sends email via the named route', function (test) {

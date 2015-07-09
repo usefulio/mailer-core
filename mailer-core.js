@@ -73,12 +73,58 @@ Mailer.Router = function () {
  */
 
 Mailer.Router.prototype.route = function (routeName) {
-  var mailerParams = _.toArray(arguments).slice(1);
-  var mailer = Mailer.apply(new Mailer(), mailerParams);
-  mailer.name = routeName;
-  this._routes[routeName] = mailer;
+  var mailerDefinitions = _.toArray(arguments).slice(1);
+  var mailers = [];
+  var firstMailer;
+  var self = this;
 
-  return mailer;
+  while (mailerDefinitions.length) {
+    var mailer = mailerDefinitions.shift();
+
+    if (_.isFunction(mailer)) {
+      mailer = new Mailer(mailer);
+      var nextMailer = mailerDefinitions[0];
+      if (_.isObject(nextMailer) && !(nextMailer instanceof Mailer)) {
+        mailer.options = mailerDefinitions.shift();
+      }
+      mailers.push(mailer);
+      if (!firstMailer)
+        firstMailer = mailer;
+    } else if (mailer instanceof Mailer) {
+      mailers.push(mailer);
+    } else if (_.isString(mailer)) {
+      mailer = self._routes[mailer];
+      mailers.push(mailer);
+    } else if (_.isObject(mailer)) {
+      _.each(mailer, function (routeName, options) {
+        var mailer = self._routes[routeName];
+        mailers.push(mailer.extend(options));
+      });
+    }
+  }
+
+  var route;
+  if (mailers.length > 1) {
+    route = new Mailer(function (email) {
+      var self = this;
+      _.each(route.mailers, function (mailer) {
+        if (mailer == route.firstMailer)
+          email = mailer.send(email, self.options);
+        else
+          email = mailer.send(email);
+      });
+      return email;
+    });
+    route.mailers = mailers;
+    route.firstMailer = firstMailer;
+  }
+  else
+    route = mailers[0];
+
+  route.name = routeName;
+  this._routes[routeName] = route;
+
+  return route;
 };
 
 /**
