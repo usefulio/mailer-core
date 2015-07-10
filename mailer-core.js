@@ -158,7 +158,7 @@ Mailer.prototype.send = function(email) {
     options: options
   }, email);
 
-  if (result === false)
+  if (result === false || result === null)
     return null;
   if (result)
     return result;
