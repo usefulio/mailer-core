@@ -1,4 +1,4 @@
-Tinytest.add('Mailer - accepts an action function and options', function (test) {
+Tinytest.add('Mailer Core - accepts an action function and options', function (test) {
   var mailer = new Mailer(function (email) {
     return true;
   }, {
@@ -8,7 +8,7 @@ Tinytest.add('Mailer - accepts an action function and options', function (test) 
   test.equal(mailer.options, {option: 'one'});
 });
 
-Tinytest.add('Mailer - accepts multiple options arguments', function (test) {
+Tinytest.add('Mailer Core - accepts multiple options arguments', function (test) {
   var mailer = new Mailer(function (email) {
     return this.options;
   }, {
@@ -20,7 +20,7 @@ Tinytest.add('Mailer - accepts multiple options arguments', function (test) {
   test.equal(mailer.options, {option: 'two', other: 'three'});
 });
 
-Tinytest.add('Mailer - calls action when sending', function (test) {
+Tinytest.add('Mailer Core - calls action when sending', function (test) {
   var mailer = new Mailer(function (email) {
     return _.extend(email, this.options);
   }, {
@@ -29,7 +29,7 @@ Tinytest.add('Mailer - calls action when sending', function (test) {
   test.equal(mailer.send({from: 'one'}), {from: 'one', option: 'one'});
 });
 
-Tinytest.add('Mailer - passes additional options to action when sending', function (test) {
+Tinytest.add('Mailer Core - passes additional options to action when sending', function (test) {
   var mailer = new Mailer(function (email) {
     return _.extend(email, this.options);
   }, {
@@ -43,7 +43,7 @@ Tinytest.add('Mailer - passes additional options to action when sending', functi
   });
 });
 
-Tinytest.add('Mailer - Mailer.compose runs multiple actions in a chain', function (test) {
+Tinytest.add('Mailer Core - Mailer.compose runs multiple actions in a chain', function (test) {
   var sender = new Mailer(function (email) {
     email.sent = true;
     return email;
@@ -60,7 +60,7 @@ Tinytest.add('Mailer - Mailer.compose runs multiple actions in a chain', functio
   });
 });
 
-Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional options', function (test) {
+Tinytest.add('Mailer Core - Mailer.extend creates a new mailer with additional options', function (test) {
   var mailer = new Mailer(function (email) {
     return _.extend(email, this.options);
   });
@@ -73,7 +73,7 @@ Tinytest.add('Mailer - Mailer.extend creates a new mailer with additional option
   });
 });
 
-Tinytest.add('Mailer - Mailer.Router.route creates a new mailer with the specified route name', function (test) {
+Tinytest.add('Mailer Core - Mailer.Router.route creates a new mailer with the specified route name', function (test) {
   var router = new Mailer.Router();
 
   var mailer = router.route('test', function (email) {});
@@ -84,7 +84,7 @@ Tinytest.add('Mailer - Mailer.Router.route creates a new mailer with the specifi
   });
 });
 
-Tinytest.add('Mailer - Mailer.Router.route accepts multiple actions and named routes', function (test) {
+Tinytest.add('Mailer Core - Mailer.Router.route accepts multiple actions and named routes', function (test) {
   var router = new Mailer.Router();
   router.route('before', function (email) {
     email.log += 'before';
@@ -104,7 +104,7 @@ Tinytest.add('Mailer - Mailer.Router.route accepts multiple actions and named ro
   test.equal(router.send('test', {}), {log: 'before1after'});
 });
 
-Tinytest.add('Mailer - Mailer.Router.route with multiple actions passes options to first anonymous action', function (test) {
+Tinytest.add('Mailer Core - Mailer.Router.route with multiple actions passes options to first anonymous action', function (test) {
   var router = new Mailer.Router();
   router.route('before', function (email) { return email; });
   router.route('after', function (email) { return email; });
@@ -118,7 +118,7 @@ Tinytest.add('Mailer - Mailer.Router.route with multiple actions passes options 
   test.equal(router.send('test', {}, {log: 'test'}), {log: 'test'});
 });
 
-Tinytest.add('Mailer - Mailer.Router.send sends email via the named route', function (test) {
+Tinytest.add('Mailer Core - Mailer.Router.send sends email via the named route', function (test) {
   var router = new Mailer.Router();
 
   var mailer = router.route('test', function (email) {
@@ -132,7 +132,7 @@ Tinytest.add('Mailer - Mailer.Router.send sends email via the named route', func
   test.equal(router.send('test', {}), {sent: true, logged: true});
 });
 
-Tinytest.add('Mailer - Mailer.Router.send accepts additional options', function (test) {
+Tinytest.add('Mailer Core - Mailer.Router.send accepts additional options', function (test) {
   var router = new Mailer.Router();
 
   var mailer = router.route('test', function (email) {
