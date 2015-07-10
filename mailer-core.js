@@ -27,7 +27,7 @@
 Mailer = function (action) {
   options = _.toArray(arguments).slice(1);
   this.action = action;
-  this.options = _.extend.apply(_, [{}].concat(options));
+  this.options = options.length === 1 ? options[0] : _.extend.apply(_, [{}].concat(options));
 
   return this;
 };
@@ -44,8 +44,14 @@ Mailer = function (action) {
 Mailer.compose = function () {
   var mailers = _.flatten(_.toArray(arguments));
   var mailer = new Mailer(function (email) {
+    var self = this;
     _.each(mailer.mailers, function (mailer) {
-      email = mailer.send(email);
+      if (_.isFunction(mailer.options)) {
+        var options = mailer.options(self.options);
+        email = mailer.send(email, options);
+      } else {
+        email = mailer.send(email);
+      }
     });
     return email;
   });
@@ -74,56 +80,36 @@ Mailer.Router = function () {
 
 Mailer.Router.prototype.route = function (routeName) {
   var mailerDefinitions = _.toArray(arguments).slice(1);
-  var mailers = [];
   var firstMailer;
   var self = this;
 
-  while (mailerDefinitions.length) {
-    (function () {
-      var mailer = mailerDefinitions.shift();
-
-      if (_.isFunction(mailer)) {
-        mailer = new Mailer(mailer);
-        var nextMailer = mailerDefinitions[0];
-        if (_.isObject(nextMailer) && !(nextMailer instanceof Mailer)) {
-          mailer.options = mailerDefinitions.shift();
-        }
-        mailers.push(mailer);
-        if (!firstMailer)
-          firstMailer = mailer;
-      } else if (mailer instanceof Mailer) {
-        mailers.push(mailer);
-      } else if (_.isString(mailer)) {
-        mailers.push(new Mailer(function (email) {
-          return self.send(mailer, email);
-        }));
-      } else if (_.isObject(mailer)) {
-        _.each(mailer, function (routeName, options) {
-          mailers.push(new Mailer(function (email) {
-            return self.send(routeName, email, options);
-          }));
-        });
-      }
-    })();
-  }
-
-  var route;
-  if (mailers.length > 1) {
-    route = new Mailer(function (email) {
-      var self = this;
-      _.each(route.mailers, function (mailer) {
-        if (mailer == route.firstMailer)
-          email = mailer.send(email, self.options);
-        else
-          email = mailer.send(email);
+  var mailers = _.flatten(_.map(mailerDefinitions, function (definition) {
+    if (_.isFunction(definition)) {
+      return new Mailer(definition, function (options) {return options;});
+    }
+    if (_.isArray(definition)) {
+      var action = definition[0];
+      if (_.isString(action))
+        definition[0] = function (email) {
+          return self.send(action, email, this.options);
+        };
+      return Mailer.apply(new Mailer(), definition);
+    }
+    if (_.isObject(definition)) {
+      return _.map(definition, function (options, routeName) {
+        return new Mailer(function (email) {
+          return self.send(routeName, email, this.options);
+        }, options);
       });
-      return email;
-    });
-    route.mailers = mailers;
-    route.firstMailer = firstMailer;
-  }
-  else
-    route = mailers[0];
+    }
+    if (_.isString(definition)) {
+      return new Mailer(function (email) {
+        return self.send(definition, email, this.options);
+      });
+    }
+  }));
+
+  var route = Mailer.compose(mailers);
 
   route.name = routeName;
   this._routes[routeName] = route;
@@ -158,7 +144,15 @@ Mailer.Router.prototype.send = function (routeName) {
  */
 
 Mailer.prototype.send = function(email) {
-  var options = _.extend.apply(_, [{}].concat([this.options]).concat(_.toArray(arguments).slice(1)));
+  var optionParams = _.filter(
+    [{}].
+    concat([this.options]).
+    concat(_.toArray(arguments).slice(1))
+    , function (option) {
+      return _.isObject(option) && !_.isFunction(option);
+    }
+  );
+  var options = _.extend.apply(_, optionParams);
   
   return this.action.call({
     options: options

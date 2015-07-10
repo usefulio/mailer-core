@@ -60,6 +60,28 @@ Tinytest.add('Mailer Core - Mailer.compose runs multiple actions in a chain', fu
   });
 });
 
+Tinytest.add('Mailer Core - Mailer.compose accepts a function as the options object for an action', function (test) {
+  var sender = new Mailer(function (email) {
+    email.sent = true;
+    return email;
+  });
+  var custom = {
+    action: function (email) {
+      email.name = this.options.name;
+      return email;
+    }
+    , options: function (options) {
+      return options.custom;
+    }
+  };
+  var mailer = Mailer.compose(sender, custom);
+
+  test.equal(mailer.send({}, {custom: {name: 'test'}}), {
+    sent: true
+    , name: 'test'
+  });
+});
+
 Tinytest.add('Mailer Core - Mailer.extend creates a new mailer with additional options', function (test) {
   var mailer = new Mailer(function (email) {
     return _.extend(email, this.options);
@@ -132,16 +154,42 @@ Tinytest.add('Mailer Core - Mailer.Router.route lazily resolves named actions', 
   test.equal(router.send('test', {}, {log: 'test'}), {log: 'test'});
 });
 
+Tinytest.add('Mailer Core - Mailer.Router.route accepts functions as options for routes', function (test) {
+  var router = new Mailer.Router();
+  router.route('test'
+    , [function (email) {email.log = this.options.log; return email;}, function (options) {return options;}]
+    , ['before', function (options) {return  options.before;}]
+    , function (email) {return email;}
+    , {
+        'after': function (options) {
+          return options.after;
+        }
+      }
+  );
+  router.route('before', function (email) { email.before = this.options.name; return email; });
+  router.route('after', function (email) { email.after = this.options.name; return email; });
+
+  test.equal(router.send('test', {}, {
+    log: 'test'
+    , before: {
+      name: 'before'
+    }
+    , after: {
+      name: 'after'
+    }
+  }), {log: 'test', before: 'before', after: 'after'});
+});
+
 Tinytest.add('Mailer Core - Mailer.Router.send sends email via the named route', function (test) {
   var router = new Mailer.Router();
 
-  var mailer = router.route('test', function (email) {
+  var mailer = router.route('test', [function (email) {
     email.sent = true;
     email.logged = this.options.logged;
     return email;
   }, {
     logged: true
-  });
+  }]);
 
   test.equal(router.send('test', {}), {sent: true, logged: true});
 });
