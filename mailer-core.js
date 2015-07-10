@@ -154,9 +154,15 @@ Mailer.prototype.send = function(email) {
   );
   var options = _.extend.apply(_, optionParams);
   
-  return this.action.call({
+  var result = this.action.call({
     options: options
   }, email);
+
+  if (result === false)
+    return null;
+  if (result)
+    return result;
+  return email;
 };
 
 /**
