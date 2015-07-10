@@ -118,6 +118,20 @@ Tinytest.add('Mailer Core - Mailer.Router.route with multiple actions passes opt
   test.equal(router.send('test', {}, {log: 'test'}), {log: 'test'});
 });
 
+Tinytest.add('Mailer Core - Mailer.Router.route lazily resolves named actions', function (test) {
+  var router = new Mailer.Router();
+  router.route('test'
+    , function (email) {email.log = this.options.log; return email;}
+    , 'before'
+    , function (email) {return email;}
+    , 'after'
+  );
+  router.route('before', function (email) { return email; });
+  router.route('after', function (email) { return email; });
+
+  test.equal(router.send('test', {}, {log: 'test'}), {log: 'test'});
+});
+
 Tinytest.add('Mailer Core - Mailer.Router.send sends email via the named route', function (test) {
   var router = new Mailer.Router();
 
