@@ -45,13 +45,14 @@ Mailer.compose = function () {
   var mailers = _.flatten(_.toArray(arguments));
   var mailer = new Mailer(function (email) {
     var self = this;
-    _.each(mailer.mailers, function (mailer) {
+    _.all(mailer.mailers, function (mailer) {
       if (_.isFunction(mailer.options)) {
         var options = mailer.options(self.options);
         email = mailer.send(email, options);
       } else {
         email = mailer.send(email);
       }
+      return email;
     });
     return email;
   });
