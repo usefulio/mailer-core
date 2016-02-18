@@ -13,6 +13,7 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.2.1');
   api.use('underscore');
+  api.use('ecmascript');
 
   api.addFiles('mailer-core.js');
   api.export('Mailer');
